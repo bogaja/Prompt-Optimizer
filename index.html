@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Prompt Master - Der Prompt Perfektionierer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <style>
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        /* Chart Container Logic */
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 400px;
+        }
+
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+        }
+
+        .gradient-text {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* Animation for generated text */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(5px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-fade-in {
+            animation: fadeIn 0.3s ease-out forwards;
+        }
+
+        .loading-spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3b82f6;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+
+<body class="bg-slate-50 text-slate-800 font-sans leading-relaxed selection:bg-blue-100 selection:text-blue-900">
+
+    <!-- Navigation / Header -->
+    <nav class="bg-white border-b border-slate-200 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center gap-3">
+                    <i class="fa-solid fa-wand-magic-sparkles text-blue-600 text-xl"></i>
+                    <span class="font-bold text-xl tracking-tight text-slate-800">Prompt<span
+                            class="text-blue-600">Master</span></span>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button onclick="resetApp()" class="text-sm text-slate-500 hover:text-blue-600 transition-colors">
+                        <i class="fa-solid fa-rotate-right mr-1"></i> Reset
+                    </button>
+                    <div
+                        class="hidden md:flex items-center space-x-2 text-xs font-medium text-slate-400 bg-slate-100 px-3 py-1 rounded-full">
+                        <span>v3.0 Gemini Flash Preview</span>
+                        <span class="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content Container -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+
+        <!-- Intro Section -->
+        <section class="text-center max-w-3xl mx-auto mb-10">
+            <h1 class="text-4xl font-extrabold tracking-tight mb-3">
+                <span class="gradient-text">Perfektionieren</span> Sie Ihre KI-Befehle
+            </h1>
+            <p class="text-slate-500 text-lg">
+                Verwandeln Sie einfache Gedanken in strukturierte, hochwirksame Prompts für ChatGPT, Claude oder Gemini.
+                Basierend auf bewährten Frameworks.
+            </p>
+        </section>
+
+        <!-- Builder & Output Interface (Split View) -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+
+            <!-- LEFT COLUMN: Input & Configuration -->
+            <div class="space-y-6">
+
+                <!-- Input Card -->
+                <div class="glass-panel bg-white rounded-2xl shadow-sm p-6 border-l-4 border-blue-500">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-lg font-bold flex items-center gap-2">
+                            <i class="fa-regular fa-keyboard text-slate-400"></i> Roh-Eingabe
+                        </h2>
+                        <span class="text-xs bg-blue-50 text-blue-600 px-2 py-1 rounded font-semibold">Schritt 1</span>
+                    </div>
+                    <div class="space-y-2">
+                        <label for="rawInput" class="text-sm font-medium text-slate-600 block">Was möchten Sie
+                            erreichen?</label>
+                        <textarea id="rawInput"
+                            class="w-full h-32 p-4 rounded-xl border border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all resize-none text-slate-700 placeholder-slate-400"
+                            placeholder="z.B. Schreib einen Text über Kaffeebohnen für meine Website..."></textarea>
+                    </div>
+                </div>
+
+                <!-- Parameters Card -->
+                <div class="glass-panel bg-white rounded-2xl shadow-sm p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-lg font-bold flex items-center gap-2">
+                            <i class="fa-solid fa-sliders text-slate-400"></i> Optimierungs-Parameter
+                        </h2>
+                        <span class="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded font-semibold">Schritt
+                            2</span>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- Role -->
+                        <div>
+                            <label
+                                class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Experten-Rolle</label>
+                            <select id="roleSelect"
+                                class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:border-blue-500 outline-none">
+                                <option value="auto">✨ Automatisch erkennen</option>
+                                <option value="copywriter">✍️ Senior Copywriter</option>
+                                <option value="developer">💻 Senior Software Engineer</option>
+                                <option value="analyst">📊 Daten-Analyst</option>
+                                <option value="coach">🧠 Lern-Coach</option>
+                                <option value="creative">🎨 Creative Director</option>
+                            </select>
+                        </div>
+
+                        <!-- Format -->
+                        <div>
+                            <label
+                                class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Ausgabe-Format</label>
+                            <select id="formatSelect"
+                                class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:border-blue-500 outline-none">
+                                <option value="structured">📝 Strukturierter Text</option>
+                                <option value="markdown">📑 Markdown (Tabelle/Code)</option>
+                                <option value="list">• Bullet-Points</option>
+                                <option value="stepbystep">👣 Schritt-für-Schritt</option>
+                                <option value="json">{} JSON Datenobjekt</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Toggles -->
+                    <div class="mt-6 space-y-3">
+                        <label
+                            class="flex items-center space-x-3 p-3 border border-slate-100 rounded-lg hover:bg-slate-50 cursor-pointer transition-colors group">
+                            <input type="checkbox" id="cotToggle"
+                                class="w-5 h-5 text-blue-600 rounded focus:ring-blue-500 border-gray-300">
+                            <div class="flex-1">
+                                <span class="font-medium text-slate-700 text-sm group-hover:text-blue-700">Chain of
+                                    Thought (CoT) aktivieren</span>
+                                <p class="text-xs text-slate-400 mt-0.5">Zwingt die KI, Schritt für Schritt zu "denken",
+                                    bevor sie antwortet.</p>
+                            </div>
+                        </label>
+
+                        <label
+                            class="flex items-center space-x-3 p-3 border border-slate-100 rounded-lg hover:bg-slate-50 cursor-pointer transition-colors group">
+                            <input type="checkbox" id="critiqueToggle"
+                                class="w-5 h-5 text-blue-600 rounded focus:ring-blue-500 border-gray-300">
+                            <div class="flex-1">
+                                <span
+                                    class="font-medium text-slate-700 text-sm group-hover:text-blue-700">Selbstreflexion
+                                    einfordern</span>
+                                <p class="text-xs text-slate-400 mt-0.5">Die KI soll ihr Ergebnis vor der Ausgabe
+                                    kritisch prüfen.</p>
+                            </div>
+                        </label>
+                    </div>
+
+                    <!-- Action Button -->
+                    <button id="generateBtn"
+                        class="mt-6 w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-xl shadow-lg shadow-blue-200 transform transition-all active:scale-95 flex justify-center items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                        <i class="fa-solid fa-wand-magic"></i> <span id="btnText">Prompt Perfektionieren</span>
+                    </button>
+                    <div id="loadingIndicator" class="hidden mt-4 text-center">
+                        <div class="loading-spinner mb-2"></div>
+                        <p class="text-sm text-slate-500">Optimiere Prompt mit Gemini AI...</p>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- RIGHT COLUMN: Output -->
+            <div class="space-y-6">
+                <div
+                    class="glass-panel bg-white rounded-2xl shadow-lg p-6 h-full flex flex-col relative overflow-hidden">
+                    <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-400 to-indigo-500"></div>
+
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-lg font-bold flex items-center gap-2 text-slate-800">
+                            <i class="fa-solid fa-robot text-blue-500"></i> Perfektionierter Prompt
+                        </h2>
+                        <div class="flex gap-2">
+                            <button onclick="copyToClipboard()"
+                                class="text-xs bg-slate-100 hover:bg-blue-50 text-slate-600 hover:text-blue-600 px-3 py-1.5 rounded-lg font-medium transition-colors border border-slate-200">
+                                <i class="fa-regular fa-copy"></i> Kopieren
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Output Area -->
+                    <div id="outputContainer"
+                        class="flex-grow bg-slate-50 rounded-xl border border-slate-200 p-5 font-mono text-sm text-slate-700 overflow-y-auto leading-loose whitespace-pre-wrap">
+                        <span class="text-slate-400 italic">Ihr optimierter Prompt erscheint hier...</span>
+                    </div>
+
+                    <!-- Feedback Hints -->
+                    <div id="hintBox" class="mt-4 hidden animate-fade-in">
+                        <div class="bg-amber-50 border border-amber-200 rounded-lg p-3 flex gap-3">
+                            <i class="fa-solid fa-lightbulb text-amber-500 mt-1"></i>
+                            <div>
+                                <h4 class="text-xs font-bold text-amber-800 uppercase">Warum ist das besser?</h4>
+                                <p class="text-xs text-amber-700 mt-1" id="hintText"></p>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- ANALYTICS SECTION -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 pt-8 border-t border-slate-200">
+
+            <!-- Context Text -->
+            <div class="lg:col-span-1">
+                <h3 class="text-xl font-bold text-slate-800 mb-4">Prompt-Analyse</h3>
+                <p class="text-sm text-slate-600 mb-6">
+                    Ein guter Prompt balanciert Kontext, Klarheit und Einschränkungen. Unsere Analyse zeigt, wie Ihr
+                    Input durch die Optimierung verbessert wurde.
+                </p>
+
+                <div class="space-y-4">
+                    <div class="bg-white p-4 rounded-xl border border-slate-100 shadow-sm">
+                        <div class="flex justify-between items-end mb-2">
+                            <span class="text-sm font-medium text-slate-500">Struktur-Score</span>
+                            <span id="scoreVal" class="text-2xl font-bold text-blue-600">0%</span>
+                        </div>
+                        <div class="w-full bg-slate-100 rounded-full h-2">
+                            <div id="scoreBar" class="bg-blue-500 h-2 rounded-full transition-all duration-1000"
+                                style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Radar Chart -->
+            <div class="lg:col-span-1 flex flex-col items-center">
+                <h4 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Qualitäts-Dimensionen</h4>
+                <div class="chart-container">
+                    <canvas id="radarChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Bar Chart -->
+            <div class="lg:col-span-1 flex flex-col items-center">
+                <h4 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Informations-Dichte</h4>
+                <div class="chart-container">
+                    <canvas id="barChart"></canvas>
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <footer class="bg-white border-t border-slate-200 mt-12 py-8">
+        <div class="max-w-7xl mx-auto px-4 text-center">
+            <p class="text-slate-400 text-sm">© 2026 AI Prompt Master. Powered by Gemini.</p>
+        </div>
+    </footer>
+
+    <!-- LOGIC SCRIPT -->
+    <script>
+        // --- CONFIG ---
+        const API_KEY = 'AIzaSyADF6nIMfF0V46_np70XufA_sUM0NW4sbc';
+        // Using Gemini 3 Flash Preview (Confirmed 2026 Model)
+        const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${API_KEY}`;
+
+        // --- CHART INSTANCES ---
+        let radarChartInstance = null;
+        let barChartInstance = null;
+
+        // --- INIT ---
+        document.addEventListener('DOMContentLoaded', () => {
+            initCharts();
+            setupEventListeners();
+        });
+
+        function setupEventListeners() {
+            document.getElementById('generateBtn').addEventListener('click', optimizePrompt);
+        }
+
+        function resetApp() {
+            document.getElementById('rawInput').value = "";
+            document.getElementById('outputContainer').innerHTML = '<span class="text-slate-400 italic">Ihr optimierter Prompt erscheint hier...</span>';
+            document.getElementById('hintBox').classList.add('hidden');
+
+            // Reset Charts
+            updateCharts({
+                clarity: 20, context: 20, constraints: 20, depth: 20, structure: 20
+            }, 0, 0);
+
+            // Reset Score
+            const bar = document.getElementById('scoreBar');
+            bar.style.width = '0%';
+            document.getElementById('scoreVal').innerText = '0%';
+            bar.classList.remove('bg-green-500', 'bg-amber-500');
+            bar.classList.add('bg-blue-500');
+        }
+
+        // --- CORE LOGIC: API CALL ---
+        async function optimizePrompt() {
+            const raw = document.getElementById('rawInput').value.trim();
+            const roleSelect = document.getElementById('roleSelect').value;
+            const formatSelect = document.getElementById('formatSelect').value;
+            const useCoT = document.getElementById('cotToggle').checked;
+            const useCritique = document.getElementById('critiqueToggle').checked;
+
+            if (!raw) {
+                alert("Bitte geben Sie zuerst einen Basis-Prompt ein.");
+                return;
+            }
+
+            // UI Loading State
+            const btn = document.getElementById('generateBtn');
+            const btnText = document.getElementById('btnText');
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            
+            btn.disabled = true;
+            btnText.innerText = "Optimiere...";
+            loadingIndicator.classList.remove('hidden');
+
+            try {
+                // 1. Construct Role Instruction
+                let roleInstruction = "";
+                const roles = {
+                    'copywriter': "You are acting as a world-class Copywriter. Use persuasive, engaging, and professional language.",
+                    'developer': "You are acting as a Senior Software Architect. Prioritize clean code, best practices, and scalability.",
+                    'analyst': "You are acting as a Data Analyst. Be precise, factual, and focused on patterns and logic.",
+                    'coach': "You are acting as an Educational Coach. Use the Socratic method and focus on clarity and learning.",
+                    'creative': "You are acting as a Creative Director. Think outside the box and propose innovative angles."
+                };
+                
+                if (roleSelect === 'auto') {
+                    roleInstruction = "Analyze the input and adopt the most suitable Expert Persona for the task.";
+                } else {
+                    roleInstruction = roles[roleSelect] || "Act as an expert in this field.";
+                }
+
+                // 2. Construct Format Instruction
+                let formatInstruction = "";
+                switch (formatSelect) {
+                    case 'structured': formatInstruction = "Output Format: Highly structured text with clear Headers, Bullet points, and bold text for emphasis."; break;
+                    case 'markdown': formatInstruction = "Output Format: Markdown. Use tables for comparisons and code blocks where appropriate."; break;
+                    case 'list': formatInstruction = "Output Format: A concise, actionable bullet-point list."; break;
+                    case 'stepbystep': formatInstruction = "Output Format: A numbered step-by-step guide."; break;
+                    case 'json': formatInstruction = "Output Format: A valid JSON object."; break;
+                }
+
+                // 3. Construct Advanced Techniques
+                let advancedTechniques = "";
+                if (useCoT) advancedTechniques += "\n- Chain of Thought: Think step-by-step. Break the problem down before formulating the final prompt.";
+                if (useCritique) advancedTechniques += "\n- Self-Correction: Critique your own prompt draft and improve it before the final output.";
+
+                // Prepare the prompt for Gemini
+                const systemInstruction = `
+                    You are an expert Prompt Engineer. Your task is to take a raw user input and a set of parameters, and generate a highly optimized, professional prompt for an LLM (like ChatGPT, Claude, or Gemini).
+                    
+                    ${roleInstruction}
+                    ${formatInstruction}
+                    ${advancedTechniques}
+
+                    You must also analyze the improvement you made.
+                    
+                    Return ONLY a valid JSON object with this exact schema:
+                    {
+                        "optimized_prompt": "The full text of the optimized prompt...",
+                        "metrics": {
+                            "clarity": 0-100,
+                            "context": 0-100,
+                            "constraints": 0-100,
+                            "depth": 0-100,
+                            "structure": 0-100
+                        },
+                        "improvement_explanation": "A short sentence explaining 1-2 key improvements you made."
+                    }
+                `;
+
+                const userMessage = `
+                    Raw Input: "${raw}"
+                    
+                    Please optimize this using the instructions provided above.
+                `;
+
+                // Add Safety Settings to prevent blocking
+                const safetySettings = [
+                    { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
+                    { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
+                    { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
+                    { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" }
+                ];
+
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{
+                            parts: [{ text: systemInstruction + "\n\n" + userMessage }]
+                        }],
+                        safetySettings: safetySettings
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    const errorMessage = errorData.error?.message || response.statusText || `Status ${response.status}`;
+                    throw new Error(`API Error Details: ${errorMessage}`);
+                }
+
+                const data = await response.json();
+
+                // Check if candidates exist (might be blocked)
+                if (!data.candidates || data.candidates.length === 0) {
+                    if (data.promptFeedback) {
+                        throw new Error(`Blocked by safety filters: ${JSON.stringify(data.promptFeedback)}`);
+                    }
+                    throw new Error("No response generated by AI.");
+                }
+
+                const textContent = data.candidates[0].content.parts[0].text;
+
+                // Robust JSON Parsing using Regex to find the JSON object
+                const jsonMatch = textContent.match(/\{[\s\S]*\}/);
+                if (!jsonMatch) {
+                    throw new Error("Invalid format received from AI (No JSON found).");
+                }
+
+                const result = JSON.parse(jsonMatch[0]);
+
+                // Update UI with Result
+                displayResult(result, raw.length);
+
+            } catch (error) {
+                console.error(error);
+                alert("Fehler bei der Optimierung:\n" + error.message);
+            } finally {
+                // Reset Loading State
+                btn.disabled = false;
+                btnText.innerText = "Prompt Perfektionieren";
+                loadingIndicator.classList.add('hidden');
+            }
+        }
+
+        function displayResult(data, rawLength) {
+            // 1. Prompt Output
+            const outputContainer = document.getElementById('outputContainer');
+            outputContainer.textContent = data.optimized_prompt;
+            outputContainer.classList.remove('animate-fade-in');
+            void outputContainer.offsetWidth; // trigger reflow
+            outputContainer.classList.add('animate-fade-in');
+
+            // 2. Explanation
+            document.getElementById('hintBox').classList.remove('hidden');
+            document.getElementById('hintText').innerText = data.improvement_explanation;
+
+            // 3. Metrics & Score
+            const metrics = data.metrics;
+            const avgScore = Math.round((metrics.clarity + metrics.context + metrics.constraints + metrics.depth + metrics.structure) / 5);
+
+            document.getElementById('scoreVal').innerText = avgScore + "%";
+            const bar = document.getElementById('scoreBar');
+            bar.style.width = avgScore + "%";
+
+            // Color coding
+            bar.classList.remove('bg-blue-500', 'bg-green-500', 'bg-amber-500');
+            if (avgScore < 50) bar.classList.add('bg-amber-500');
+            else if (avgScore < 80) bar.classList.add('bg-blue-500');
+            else bar.classList.add('bg-green-500');
+
+            // 4. Charts
+            updateCharts(metrics, rawLength, data.optimized_prompt.length);
+        }
+
+        function copyToClipboard() {
+            const text = document.getElementById('outputContainer').textContent;
+            navigator.clipboard.writeText(text).then(() => {
+                const btn = document.querySelector('button[onclick="copyToClipboard()"]');
+                const original = btn.innerHTML;
+                btn.innerHTML = '<i class="fa-solid fa-check"></i> Kopiert!';
+                setTimeout(() => btn.innerHTML = original, 2000);
+            });
+        }
+
+        // --- CHARTS (Chart.js) ---
+        function initCharts() {
+            // RADAR CHART
+            const radarCtx = document.getElementById('radarChart').getContext('2d');
+            radarChartInstance = new Chart(radarCtx, {
+                type: 'radar',
+                data: {
+                    labels: ['Klarheit', 'Kontext', 'Limits', 'Tiefe', 'Struktur'],
+                    datasets: [{
+                        label: 'Prompt Qualität',
+                        data: [20, 20, 20, 20, 20],
+                        backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                        borderColor: 'rgba(59, 130, 246, 1)',
+                        pointBackgroundColor: 'rgba(59, 130, 246, 1)',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        r: {
+                            angleLines: { color: 'rgba(0,0,0,0.1)' },
+                            grid: { color: 'rgba(0,0,0,0.05)' },
+                            suggestedMin: 0,
+                            suggestedMax: 100,
+                            ticks: { display: false }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
+            });
+
+            // BAR CHART
+            const barCtx = document.getElementById('barChart').getContext('2d');
+            barChartInstance = new Chart(barCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Input (Roh)', 'Output (Optimiert)'],
+                    datasets: [{
+                        label: 'Zeichenanzahl',
+                        data: [0, 0],
+                        backgroundColor: [
+                            'rgba(148, 163, 184, 0.5)', // Slate 400
+                            'rgba(34, 197, 94, 0.6)'    // Green 500
+                        ],
+                        borderColor: [
+                            'rgba(148, 163, 184, 1)',
+                            'rgba(34, 197, 94, 1)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { display: false }
+                        },
+                        x: {
+                            grid: { display: false }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function (context) {
+                                    return context.parsed.y + " Zeichen";
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateCharts(metrics, rawLen, finalLen) {
+            // Update Radar
+            radarChartInstance.data.datasets[0].data = [
+                metrics.clarity,
+                metrics.context,
+                metrics.constraints,
+                metrics.depth,
+                metrics.structure
+            ];
+            radarChartInstance.update();
+
+            // Update Bar
+            barChartInstance.data.datasets[0].data = [rawLen || 10, finalLen || 10];
+            barChartInstance.update();
+        }
+    </script>
+</body>
+
+</html>
