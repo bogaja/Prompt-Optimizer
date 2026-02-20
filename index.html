@@ -199,10 +199,7 @@
                                 class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Ziel-Modell</label>
                             <select id="modelSelect"
                                 class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:border-blue-500 outline-none">
-                                <option value="agnostic">🌐 Universell</option>
-                                <option value="chatgpt">🟢 ChatGPT</option>
-                                <option value="claude">🟣 Claude</option>
-                                <option value="gemini">🔵 Gemini</option>
+                                <option value="gemini">🔵 Gemini 3 Flash Preview</option>
                             </select>
                         </div>
 
@@ -390,9 +387,7 @@
     <!-- LOGIC SCRIPT -->
     <script>
         // --- CONFIG ---
-        // VORSICHT: Der vorherige API Key wurde von Google wegen eines Leaks gesperrt (403 Error).
-        // Bitte setzen Sie hier Ihren EIGENEN gültigen Gemini API Key ein!
-        const API_KEY = 'BITTE_EIGENEN_API_KEY_EINTRAGEN';
+        const API_KEY = 'AIzaSyADF6nIMfF0V46_np70XufA_sUM0NW4sbc';
         // Using Gemini 3 Flash Preview (Confirmed 2026 Model)
         const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${API_KEY}`;
 
@@ -443,11 +438,6 @@
 
             if (!raw) {
                 alert("Bitte geben Sie zuerst einen Basis-Prompt ein.");
-                return;
-            }
-
-            if (API_KEY === 'BITTE_EIGENEN_API_KEY_EINTRAGEN' || API_KEY.trim() === '') {
-                alert("API KEY FEHLT!\n\nIhr vorheriger API-Key wurde von Google aus Sicherheitsgründen gesperrt (Leaked Key).\nBitte tragen Sie in Zeile 360 der index.html Ihren eigenen Gemini API-Key ein.");
                 return;
             }
 
