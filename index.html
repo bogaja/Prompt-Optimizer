@@ -192,6 +192,33 @@
                                 <option value="json">{} JSON Datenobjekt</option>
                             </select>
                         </div>
+
+                        <!-- Target Model -->
+                        <div>
+                            <label
+                                class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Ziel-Modell</label>
+                            <select id="modelSelect"
+                                class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:border-blue-500 outline-none">
+                                <option value="agnostic">🌐 Universell</option>
+                                <option value="chatgpt">🟢 ChatGPT</option>
+                                <option value="claude">🟣 Claude</option>
+                                <option value="gemini">🔵 Gemini</option>
+                            </select>
+                        </div>
+
+                        <!-- Tone -->
+                        <div>
+                            <label
+                                class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Tonfall</label>
+                            <select id="toneSelect"
+                                class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:border-blue-500 outline-none">
+                                <option value="neutral">⚖️ Neutral & Objektiv</option>
+                                <option value="professional">👔 Professionell</option>
+                                <option value="friendly">🤝 Freundlich & Empathisch</option>
+                                <option value="direct">🎯 Direkt & Knapp</option>
+                                <option value="enthusiastic">✨ Enthusiastisch</option>
+                            </select>
+                        </div>
                     </div>
 
                     <!-- Toggles -->
@@ -270,7 +297,42 @@
                         </div>
                     </div>
 
+                    <!-- Setup Save Buttons -->
+                    <div id="saveActions"
+                        class="mt-4 hidden animate-fade-in border-t border-slate-100 pt-4 flex justify-between items-center">
+                        <div class="flex-1 mr-4">
+                            <input type="text" id="promptTitle" placeholder="Titel für diesen Prompt (optional)"
+                                class="w-full text-sm p-2 border border-slate-200 rounded-lg focus:outline-none focus:border-blue-400">
+                        </div>
+                        <button onclick="savePrompt()"
+                            class="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-semibold py-2 px-4 rounded-lg flex items-center gap-2 transition-colors text-sm">
+                            <i class="fa-solid fa-bookmark"></i> Prompt Speichern
+                        </button>
+                    </div>
+
                 </div>
+
+                <!-- Saved Prompts Library -->
+                <div class="glass-panel bg-white rounded-2xl shadow-sm p-6 border-t-4 border-indigo-500">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-lg font-bold flex items-center gap-2">
+                            <i class="fa-solid fa-book-bookmark text-indigo-500"></i> Meine Bibliothek
+                        </h2>
+                        <button onclick="clearLibrary()"
+                            class="text-xs text-slate-400 hover:text-red-500 transition-colors">
+                            <i class="fa-solid fa-trash-can"></i> Alle löschen
+                        </button>
+                    </div>
+
+                    <div id="libraryContainer" class="space-y-3 max-h-64 overflow-y-auto pr-2">
+                        <!-- Saved items will be injected here -->
+                        <div class="text-center py-6">
+                            <i class="fa-solid fa-box-open text-slate-200 text-4xl mb-2"></i>
+                            <p class="text-sm text-slate-400">Noch keine Prompts gespeichert.</p>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </div>
 
@@ -340,6 +402,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             initCharts();
             setupEventListeners();
+            loadLibrary();
         });
 
         function setupEventListeners() {
@@ -350,6 +413,8 @@
             document.getElementById('rawInput').value = "";
             document.getElementById('outputContainer').innerHTML = '<span class="text-slate-400 italic">Ihr optimierter Prompt erscheint hier...</span>';
             document.getElementById('hintBox').classList.add('hidden');
+            document.getElementById('saveActions').classList.add('hidden');
+            document.getElementById('promptTitle').value = "";
 
             // Reset Charts
             updateCharts({
@@ -369,6 +434,8 @@
             const raw = document.getElementById('rawInput').value.trim();
             const roleSelect = document.getElementById('roleSelect').value;
             const formatSelect = document.getElementById('formatSelect').value;
+            const modelSelect = document.getElementById('modelSelect').value;
+            const toneSelect = document.getElementById('toneSelect').value;
             const useCoT = document.getElementById('cotToggle').checked;
             const useCritique = document.getElementById('critiqueToggle').checked;
 
@@ -381,7 +448,7 @@
             const btn = document.getElementById('generateBtn');
             const btnText = document.getElementById('btnText');
             const loadingIndicator = document.getElementById('loadingIndicator');
-            
+
             btn.disabled = true;
             btnText.innerText = "Optimiere...";
             loadingIndicator.classList.remove('hidden');
@@ -396,7 +463,7 @@
                     'coach': "You are acting as an Educational Coach. Use the Socratic method and focus on clarity and learning.",
                     'creative': "You are acting as a Creative Director. Think outside the box and propose innovative angles."
                 };
-                
+
                 if (roleSelect === 'auto') {
                     roleInstruction = "Analyze the input and adopt the most suitable Expert Persona for the task.";
                 } else {
@@ -413,7 +480,23 @@
                     case 'json': formatInstruction = "Output Format: A valid JSON object."; break;
                 }
 
-                // 3. Construct Advanced Techniques
+                // 3. Construct Model & Tone Instruction
+                let modelInstruction = "";
+                switch (modelSelect) {
+                    case 'chatgpt': modelInstruction = "Target AI: ChatGPT. Format the output to work best with ChatGPT. Use Markdown, clear headings, and bold text for emphasis."; break;
+                    case 'claude': modelInstruction = "Target AI: Claude. Format the output to work best with Claude. Use XML tags (e.g., <context>, <instructions>, <examples>) heavily to demarcate sections."; break;
+                    case 'gemini': modelInstruction = "Target AI: Gemini. Format the output to work best with Gemini. Be direct and clear, using bullet points and clear delimiters."; break;
+                }
+
+                let toneInstruction = "";
+                switch (toneSelect) {
+                    case 'professional': toneInstruction = "The resulting prompt should instruct the LLM to use a professional, formal, and highly structured tone."; break;
+                    case 'friendly': toneInstruction = "The resulting prompt should instruct the LLM to use an empathetic, friendly, and conversational tone."; break;
+                    case 'direct': toneInstruction = "The resulting prompt should instruct the LLM to use a highly direct, concise, and no-fluff tone."; break;
+                    case 'enthusiastic': toneInstruction = "The resulting prompt should instruct the LLM to use an enthusiastic, motivating, and engaging tone."; break;
+                }
+
+                // 4. Construct Advanced Techniques
                 let advancedTechniques = "";
                 if (useCoT) advancedTechniques += "\n- Chain of Thought: Think step-by-step. Break the problem down before formulating the final prompt.";
                 if (useCritique) advancedTechniques += "\n- Self-Correction: Critique your own prompt draft and improve it before the final output.";
@@ -424,6 +507,8 @@
                     
                     ${roleInstruction}
                     ${formatInstruction}
+                    ${toneInstruction}
+                    ${modelInstruction}
                     ${advancedTechniques}
 
                     You must also analyze the improvement you made.
@@ -517,6 +602,7 @@
 
             // 2. Explanation
             document.getElementById('hintBox').classList.remove('hidden');
+            document.getElementById('saveActions').classList.remove('hidden');
             document.getElementById('hintText').innerText = data.improvement_explanation;
 
             // 3. Metrics & Score
@@ -535,16 +621,118 @@
 
             // 4. Charts
             updateCharts(metrics, rawLength, data.optimized_prompt.length);
+
+            // Auto-focus title input for saving
+            document.getElementById('promptTitle').focus();
         }
 
-        function copyToClipboard() {
-            const text = document.getElementById('outputContainer').textContent;
-            navigator.clipboard.writeText(text).then(() => {
-                const btn = document.querySelector('button[onclick="copyToClipboard()"]');
-                const original = btn.innerHTML;
-                btn.innerHTML = '<i class="fa-solid fa-check"></i> Kopiert!';
-                setTimeout(() => btn.innerHTML = original, 2000);
+        function copyToClipboard(textStr = null, btnElem = null) {
+            const textToCopy = textStr || document.getElementById('outputContainer').textContent;
+            navigator.clipboard.writeText(textToCopy).then(() => {
+                if (btnElem) {
+                    const original = btnElem.innerHTML;
+                    btnElem.innerHTML = '<i class="fa-solid fa-check text-green-500"></i>';
+                    setTimeout(() => btnElem.innerHTML = original, 2000);
+                } else {
+                    const btn = document.querySelector('button[onclick="copyToClipboard()"]');
+                    const original = btn.innerHTML;
+                    btn.innerHTML = '<i class="fa-solid fa-check"></i> Kopiert!';
+                    setTimeout(() => btn.innerHTML = original, 2000);
+                }
             });
+        }
+
+        // --- LIBRARY LOGIC ---
+        function savePrompt() {
+            const content = document.getElementById('outputContainer').textContent;
+            // Get raw input as fallback title if none is provided
+            const raw = document.getElementById('rawInput').value.trim();
+            let title = document.getElementById('promptTitle').value.trim() || raw.substring(0, 30) + "...";
+
+            if (!content || content.includes("Ihr optimierter Prompt erscheint hier")) return;
+
+            let prompts = JSON.parse(localStorage.getItem('savedPrompts') || '[]');
+
+            const newEntry = {
+                id: Date.now().toString(),
+                title: title,
+                content: content,
+                date: new Date().toLocaleDateString('de-DE')
+            };
+
+            prompts.unshift(newEntry);
+            localStorage.setItem('savedPrompts', JSON.stringify(prompts));
+
+            // UI Feedback
+            const btn = document.querySelector('button[onclick="savePrompt()"]');
+            const original = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-check"></i> Gespeichert!';
+            btn.classList.replace('bg-indigo-50', 'bg-green-50');
+            btn.classList.replace('text-indigo-700', 'text-green-700');
+
+            setTimeout(() => {
+                btn.innerHTML = original;
+                btn.classList.replace('bg-green-50', 'bg-indigo-50');
+                btn.classList.replace('text-green-700', 'text-indigo-700');
+            }, 2000);
+
+            document.getElementById('promptTitle').value = ""; // Clear input
+            loadLibrary();
+        }
+
+        function loadLibrary() {
+            const container = document.getElementById('libraryContainer');
+            const prompts = JSON.parse(localStorage.getItem('savedPrompts') || '[]');
+
+            if (prompts.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-6">
+                        <i class="fa-solid fa-box-open text-slate-200 text-4xl mb-2"></i>
+                        <p class="text-sm text-slate-400">Noch keine Prompts gespeichert.</p>
+                    </div>`;
+                return;
+            }
+
+            container.innerHTML = '';
+            prompts.forEach(p => {
+                // Escape quotes for onclick
+                const safeContent = p.content.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+
+                const div = document.createElement('div');
+                div.className = 'group flex justify-between items-start p-3 bg-slate-50 hover:bg-slate-100 border border-slate-100 rounded-lg transition-colors';
+                div.innerHTML = `
+                    <div class="flex-1 min-w-0 pr-3 cursor-pointer" onclick="copyToClipboard('${safeContent}', this.nextElementSibling.querySelector('button'))">
+                        <h4 class="text-sm font-semibold text-slate-700 truncate" title="${p.title}">${p.title}</h4>
+                        <div class="flex items-center gap-2 mt-1 text-xs text-slate-500">
+                            <span class="flex-shrink-0"><i class="fa-regular fa-clock"></i> ${p.date}</span>
+                            <span class="truncate text-slate-400 group-hover:text-slate-600 transition-colors">${p.content.substring(0, 40)}...</span>
+                        </div>
+                    </div>
+                    <div class="flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button onclick="copyToClipboard('${safeContent}', this)" class="text-slate-400 hover:text-blue-500 p-1" title="Kopieren">
+                            <i class="fa-regular fa-copy"></i>
+                        </button>
+                        <button onclick="deletePrompt('${p.id}')" class="text-slate-400 hover:text-red-500 p-1" title="Löschen">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function deletePrompt(id) {
+            let prompts = JSON.parse(localStorage.getItem('savedPrompts') || '[]');
+            prompts = prompts.filter(p => p.id !== id);
+            localStorage.setItem('savedPrompts', JSON.stringify(prompts));
+            loadLibrary();
+        }
+
+        function clearLibrary() {
+            if (confirm('Möchten Sie wirklich alle gespeicherten Prompts löschen?')) {
+                localStorage.removeItem('savedPrompts');
+                loadLibrary();
+            }
         }
 
         // --- CHARTS (Chart.js) ---
