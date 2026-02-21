@@ -103,6 +103,10 @@
                             class="text-blue-600">Master</span></span>
                 </div>
                 <div class="flex items-center space-x-4">
+                    <button onclick="resetApiKey()"
+                        class="text-sm text-slate-500 hover:text-blue-600 transition-colors">
+                        <i class="fa-solid fa-key mr-1"></i> API Key Reset
+                    </button>
                     <button onclick="resetApp()" class="text-sm text-slate-500 hover:text-blue-600 transition-colors">
                         <i class="fa-solid fa-rotate-right mr-1"></i> Reset
                     </button>
@@ -387,13 +391,31 @@
     <!-- LOGIC SCRIPT -->
     <script>
         // --- CONFIG ---
-        // API-Key ist leicht "verschleiert", damit automatische GitHub Scanner ihn nicht sofort bei Public-Repos sperren
-        const _k1 = 'AIzaSyC9idA-';
-        const _k2 = 'aKZd3S2zB-Y1K5';
-        const _k3 = 'VEYVUXcS3NcE8';
-        const API_KEY = _k1 + _k2 + _k3;
-        // Using Gemini 3 Flash Preview (Confirmed 2026 Model)
-        const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${API_KEY}`;
+        // API-Key wird jetzt lokal gespeichert und nicht mehr im Code veröffentlicht
+        let API_KEY = localStorage.getItem('gemini_api_key');
+
+        function getApiUrl() {
+            if (!API_KEY) {
+                API_KEY = prompt('Bitte geben Sie Ihren Gemini API Key ein (der Key wird lokal im Browser gespeichert und NICHT veröffentlicht):');
+                if (API_KEY && API_KEY.trim() !== '') {
+                    API_KEY = API_KEY.trim();
+                    localStorage.setItem('gemini_api_key', API_KEY);
+                } else {
+                    alert('Ein API Key wird benötigt, um die App zu nutzen.');
+                    throw new Error("Missing API Key");
+                }
+            }
+            // Using Gemini 3 Flash Preview (Confirmed 2026 Model)
+            return `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${API_KEY}`;
+        }
+
+        function resetApiKey() {
+            if (confirm("Möchten Sie Ihren gespeicherten API Key wirklich löschen?")) {
+                localStorage.removeItem('gemini_api_key');
+                API_KEY = null;
+                alert("API Key gelöscht. Beim nächsten Ausführen werden Sie nach einem neuen Key gefragt.");
+            }
+        }
 
         // --- CHART INSTANCES ---
         let radarChartInstance = null;
@@ -542,7 +564,8 @@
                     { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" }
                 ];
 
-                const response = await fetch(API_URL, {
+                const apiUrl = getApiUrl();
+                const response = await fetch(apiUrl, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
