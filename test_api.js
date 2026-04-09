@@ -1,5 +1,5 @@
 const API_KEY = 'AIzaSyADF6nIMfF0V46_np70XufA_sUM0NW4sbc';
-const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${API_KEY}`;
+const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite-preview:generateContent?key=${API_KEY}`;
 async function test() {
     try {
         const response = await fetch(API_URL, {

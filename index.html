@@ -112,7 +112,7 @@
                     </button>
                     <div
                         class="hidden md:flex items-center space-x-2 text-xs font-medium text-slate-400 bg-slate-100 px-3 py-1 rounded-full">
-                        <span>v3.0 Gemini Flash Preview</span>
+                        <span>v3.1 Gemini Flash</span>
                         <span class="w-1.5 h-1.5 rounded-full bg-green-500"></span>
                     </div>
                 </div>
@@ -203,7 +203,7 @@
                                 class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Ziel-Modell</label>
                             <select id="modelSelect"
                                 class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:border-blue-500 outline-none">
-                                <option value="gemini">🔵 Gemini 3 Flash Preview</option>
+                                <option value="gemini">🔵 Gemini 3.1 Flash</option>
                             </select>
                         </div>
 
@@ -257,7 +257,7 @@
                     </button>
                     <div id="loadingIndicator" class="hidden mt-4 text-center">
                         <div class="loading-spinner mb-2"></div>
-                        <p class="text-sm text-slate-500">Optimiere Prompt mit Gemini AI...</p>
+                        <p class="text-sm text-slate-500">Optimiere Prompt mit Gemini 3.1 AI...</p>
                     </div>
                 </div>
 
@@ -405,8 +405,8 @@
                     throw new Error("Missing API Key");
                 }
             }
-            // Using Gemini 3 Flash Preview (Confirmed 2026 Model)
-            return `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${API_KEY}`;
+            // Using Gemini 3.1 Flash Lite Preview (Confirmed April 2026 Model)
+            return `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite-preview:generateContent?key=${API_KEY}`;
         }
 
         function resetApiKey() {
